@@ -4,7 +4,6 @@ base = "site/"
 publish = "site/public/"
 command = "hugo"
 
-
 [build.environment]
 HUGO_VERSION = "0.53"
 
