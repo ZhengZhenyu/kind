@@ -14,10 +14,11 @@ This guide covers getting started with the `kind` command.
 
 ## Installation
 
-You can either install kind with `GO111MODULE="on" go get sigs.k8s.io/kind@v0.4.0` or clone this repo 
+You can either install kind with `GO111MODULE="on" go get sigs.k8s.io/kind@v0.5.1` or clone this repo 
 and run `make build` from the repository.
 
-**NOTE**: please use the latest go to do this, ideally go 1.12.6 or greater.
+**NOTE**: please use the latest Go to do this, ideally go 1.12.9 or greater.
+A version of Go officially [supported upstream][go-supported] by the Go project must be used.
 
 This will put `kind` in `$(go env GOPATH)/bin`. You may need to add that directory to your `$PATH` as
 shown [here](https://golang.org/doc/code.html#GOPATH) if you encounter the error
@@ -28,13 +29,24 @@ Without installing go, kind can be built reproducibly with docker using `make bu
 Stable binaries are also available on the [releases] page. Stable releases are
 generally recommended for CI usage in particular.
 To install, download the binary for your platform from "Assets" and place this
-into your `$PATH`. E.G. for macOS:
+into your `$PATH`. 
 
+On macOS / Linux:
+
+```bash
+curl -Lo ./kind https://github.com/kubernetes-sigs/kind/releases/download/v0.5.1/kind-$(uname)-amd64
+chmod +x ./kind
+mv ./kind /some-dir-in-your-PATH/kind
 ```
-curl -Lo ./kind-darwin-amd64 https://github.com/kubernetes-sigs/kind/releases/download/v0.4.0/kind-darwin-amd64
-chmod +x ./kind-darwin-amd64
-mv ./kind-darwin-amd64 /some-dir-in-your-PATH/kind
+
+
+On Windows:
+
+```powershell
+curl.exe -Lo kind-windows-amd64.exe https://github.com/kubernetes-sigs/kind/releases/download/v0.5.1/kind-windows-amd64
+Move-Item .\kind-windows-amd64.exe c:\some-dir-in-your-PATH\kind.exe
 ```
+
 
 ## Creating a Cluster
 
@@ -147,8 +159,8 @@ container.
 
 See [building the base image](#building-the-base-image) for more advanced information.
 
-Currently, kind supports three different ways to build a `node-image`: via
-`apt`, or if you have the [Kubernetes][kubernetes] source in your host machine
+Currently, kind supports two different ways to build a `node-image`
+if you have the [Kubernetes][kubernetes] source in your host machine
 (`$GOPATH/src/k8s.io/kubernetes`), by using `docker` or `bazel`.
 To specify the build type use the flag `--type`.
 Note however that using `--type=bazel` on Windows or MacOS will not work
@@ -158,7 +170,7 @@ A workaround may be enabled in the future.
 kind will default to using the build type `docker` if none is specified.
 
 ```
-kind build node-image --type apt
+kind build node-image --type bazel
 ```
 
 Similarly as for the base-image command, you can specify the name and tag of
@@ -168,16 +180,29 @@ If you previously changed the name and tag of the base image, you can use here
 the flag `--base-image` to specify the name and tag you used.
 
 **Note**: If you are running kind on MacOS or Windows then it is recommended
-that you have at least 4GB of RAM dedicated to the virtual machine (VM) running
+that you have at least 8GB of RAM dedicated to the virtual machine (VM) running
 the Docker engine otherwise Building Kubernetes may fail.
 
-To change the resource limits for the Docker engine on Mac, you'll need to open the
+To change the resource limits for the Docker on Mac, you'll need to open the
 **Preferences** menu.  
 <img src="/docs/user/images/docker-pref-1.png"/>
 
 Now, go to the **Advanced** settings page, and change the
 settings there, see [changing Docker's resource limits][Docker resource lims].  
-<img src="/docs/user/images/docker-pref-2.png"/>
+<img src="/docs/user/images/docker-pref-2.png" alt="Setting 8Gb of memory in Docker for Mac" />
+
+
+To change the resource limits for the Docker on Windows, you'll need to right-click the Moby
+icon on the taskbar, and choose "Settings". If you see "Switch to Linux Containers", then you'll need
+to do that first before opening "Settings"
+
+<img src="/docs/user/images/docker-pref-1-win.png"/>
+
+Now, go to the **Advanced** settings page, and change the
+settings there, see [changing Docker's resource limits][Docker resource lims].  
+
+<img src="/docs/user/images/docker-pref-build-win.png" alt="Setting 8Gb of memory in Docker for Windows" />
+
 
 You may also try removing any unused data left by the Docker engine - e.g.,
 `docker system prune`.
@@ -256,6 +281,7 @@ nodes:
   - containerPort: 80
     hostPort: 80
     listenAddress: "127.0.0.1" # Optional, defaults to "0.0.0.0"
+    protocol: udp # Optional, defaults to tcp
 ```
 This can be useful if using `NodePort` services or daemonsets exposing host ports.
 
@@ -270,7 +296,7 @@ apiVersion: kind.sigs.k8s.io/v1alpha3
 # patch the generated kubeadm config with some extra settings
 kubeadmConfigPatches:
 - |
-  apiVersion: kubeadm.k8s.io/v1beta1
+  apiVersion: kubeadm.k8s.io/v1beta2
   kind: ClusterConfiguration
   metadata:
     name: config
@@ -284,7 +310,7 @@ kubeadmConfigPatches:
     extraArgs:
       "feature-gates": "FeatureGateName=true"
 - |
-  apiVersion: kubeadm.k8s.io/v1beta1
+  apiVersion: kubeadm.k8s.io/v1beta2
   kind: InitConfiguration
   metadata:
     name: config
@@ -300,8 +326,8 @@ nodes:
 ```
 
 #### IPv6 clusters
-You can run ipv6 only clusters using `kind`, but first you need to
-[enable ipv6 in your docker daemon][docker enable ipv6].
+You can run ipv6 only clusters using `kind`, but first you need to enable ipv6 in your docker daemon by editing `/etc/docker/daemon.json` [as described here][docker enable ipv6].
+Ensure you `systemctl restart docker` to pick up the changes.
 
 ```yaml
 # an ipv6 cluster
@@ -363,6 +389,7 @@ The structure of the logs will look more or less like this:
 The logs contain information about the Docker host, the containers running 
 kind, the Kubernetes cluster itself, etc.
 
+[go-supported]: https://golang.org/doc/devel/release.html#policy
 [known issues]: /docs/user/known-issues
 [node image]: /docs/design/node-image
 [base image]: /docs/design/base-image
@@ -378,4 +405,4 @@ kind, the Kubernetes cluster itself, etc.
 [Kubernetes imagePullPolicy]: https://kubernetes.io/docs/concepts/containers/images/#updating-images
 [Private Registries]: /docs/user/private-registries
 [customize control plane with kubeadm]: https://kubernetes.io/docs/setup/independent/control-plane-flags/
-[docker enable ipv6]: https://docs.docker.com/config/daemon/ipv6/
+[docker enable ipv6]: https://docs.docker.com/v17.09/engine/userguide/networking/default_network/ipv6/

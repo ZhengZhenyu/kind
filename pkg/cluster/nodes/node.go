@@ -17,6 +17,8 @@ limitations under the License.
 package nodes
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"io"
 	"os"
@@ -163,7 +165,7 @@ func (n *Node) IP() (ipv4 string, ipv6 string, err error) {
 	if cachedIPv4 != "" && cachedIPv6 != "" {
 		return cachedIPv4, cachedIPv6, nil
 	}
-	// retrive the IP address of the node using docker inspect
+	// retrieve the IP address of the node using docker inspect
 	lines, err := docker.Inspect(n.name, "{{range .NetworkSettings.Networks}}{{.IPAddress}},{{.GlobalIPv6Address}}{{end}}")
 	if err != nil {
 		return "", "", errors.Wrap(err, "failed to get container details")
@@ -191,7 +193,7 @@ func (n *Node) Ports(containerPort int32) (hostPort int32, err error) {
 	if isCached {
 		return hostPort, nil
 	}
-	// retrive the specific port mapping using docker inspect
+	// retrieve the specific port mapping using docker inspect
 	lines, err := docker.Inspect(n.name, fmt.Sprintf("{{(index (index .NetworkSettings.Ports \"%d/tcp\") 0).HostPort}}", containerPort))
 	if err != nil {
 		return -1, errors.Wrap(err, "failed to get file")
@@ -221,7 +223,7 @@ func (n *Node) Role() (role string, err error) {
 	if role != "" {
 		return role, nil
 	}
-	// retrive the role the node using docker inspect
+	// retrieve the role the node using docker inspect
 	lines, err := docker.Inspect(n.name, fmt.Sprintf("{{index .Config.Labels %q}}", constants.NodeRoleKey))
 	if err != nil {
 		return "", errors.Wrapf(err, "failed to get %q label", constants.NodeRoleKey)
@@ -248,12 +250,24 @@ func (n *Node) WriteFile(dest, content string) error {
 	return n.Command("cp", "/dev/stdin", dest).SetStdin(strings.NewReader(content)).Run()
 }
 
-// ImageInspect return low-level information on containers images inside a node
-func (n *Node) ImageInspect(containerNameOrID string) ([]string, error) {
-	cmd := n.Command(
-		"crictl", "inspecti", containerNameOrID,
-	)
-	return exec.CombinedOutputLines(cmd)
+// ImageID returns the ID for a given image if it is present on the node
+func (n *Node) ImageID(image string) (string, error) {
+	var out bytes.Buffer
+	if err := n.Command("crictl", "inspecti", image).SetStdout(&out).Run(); err != nil {
+		return "", err
+	}
+
+	// we only care about the image ID
+	crictlOut := struct {
+		Status struct {
+			ID string `json:"id"`
+		} `json:"status"`
+	}{}
+	if err := json.Unmarshal(out.Bytes(), &crictlOut); err != nil {
+		return "", err
+	}
+
+	return crictlOut.Status.ID, nil
 }
 
 // LoadImageArchive will load the image contents in the image reader to the
@@ -323,7 +337,7 @@ func getSubnets(networkName string) ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
-	return strings.Split(lines[0], " "), nil
+	return strings.Split(strings.TrimSpace(lines[0]), " "), nil
 }
 
 // EnableIPv6 enables IPv6 inside the node container and in the inner docker daemon

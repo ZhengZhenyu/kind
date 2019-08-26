@@ -37,12 +37,9 @@ fix_mount() {
   # and this flag also happens to make /sys rw, amongst other things
   mount -o remount,ro /sys
 
-  echo 'INFO: making mounts shared for "/", "/run", "/var/lib/containerd"'
+  echo 'INFO: making mounts shared'
   # for mount propagation
-  # TODO(bentheelder): determine which exact mounts we need to do this on
-  mount --make-shared /
-  mount --make-shared /run
-  mount --make-shared /var/lib/containerd
+  mount --make-rshared /
 }
 
 fix_machine_id() {
@@ -80,11 +77,22 @@ fix_kmsg() {
   fi
 }
 
+configure_proxy() {
+  # ensure all processes receive the proxy settings by default
+  # https://www.freedesktop.org/software/systemd/man/systemd-system.conf.html
+  mkdir -p /etc/systemd/system.conf.d/
+  cat <<EOF >/etc/systemd/system.conf.d/proxy-default-environment.conf
+[Manager]
+DefaultEnvironment="HTTP_PROXY=${HTTP_PROXY:-}" "HTTPS_PROXY=${HTTPS_PROXY:-}" "NO_PROXY=${NO_PROXY:-}"
+EOF
+}
+
 # run pre-init fixups
 fix_kmsg
 fix_mount
 fix_machine_id
 fix_product_name
+configure_proxy
 
 # we want the command (expected to be systemd) to be PID1, so exec to it
 exec "$@"

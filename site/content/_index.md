@@ -3,7 +3,7 @@
 [kind] is a tool for running local Kubernetes clusters using Docker container "nodes".  
 kind is primarily designed for testing Kubernetes 1.11+, initially targeting the [conformance tests].
 
-If you have [go] and [docker] installed `GO111MODULE="on" go get sigs.k8s.io/kind@v0.4.0 && kind create cluster` is all you need!
+If you have [go] \([1.11+][go-supported]) and [docker] installed `GO111MODULE="on" go get sigs.k8s.io/kind@v0.5.1 && kind create cluster` is all you need!
 
 <img src="https://gist.githubusercontent.com/BenTheElder/621bc321fc6d9506fd936feb36d32dd0/raw/13fe81c219e64b4917575c8988e06719c072c7f1/kind-demo.gif" alt="2x speed `kind create cluster` demo" />
 
@@ -61,7 +61,7 @@ See also: our own [contributor guide] and the Kubernetes [community page].
 
 - kind supports multi-node (including HA) clusters
 - kind supports building Kubernetes release builds from source
-  - support for make / bash / docker, bazel, or installing from apt, in addition to pre-published builds.
+  - support for make / bash / docker, or bazel, in addition to pre-published builds.
 - kind is written in go, and can be used as a library, has stable releases
 - kind supports Windows in addition to MacOS and Linux
 - kind is a [CNCF certified conformant Kubernetes installer](https://landscape.cncf.io/selected=kind)
@@ -84,12 +84,13 @@ Participation in the Kubernetes community is governed by the [Kubernetes Code of
 <!--links-->
 [kind]: https://sigs.k8s.io/kind
 [go]: https://golang.org/
+[go-supported]: https://golang.org/doc/devel/release.html#policy
 [docker]: https://www.docker.com/
 [community page]: http://kubernetes.io/community/
 [Kubernetes Code of Conduct]: code-of-conduct.md
 [Go Report Card Badge]: https://goreportcard.com/badge/sigs.k8s.io/kind
 [Go Report Card]: https://goreportcard.com/report/sigs.k8s.io/kind
-[conformance tests]: https://github.com/kubernetes/community/blob/master/contributors/devel/conformance-tests.md
+[conformance tests]: https://github.com/kubernetes/community/blob/master/contributors/devel/sig-architecture/conformance-tests.md
 [packages]: https://github.com/kubernetes-sigs/kind/tree/master/pkg
 [cluster package]: https://github.com/kubernetes-sigs/kind/tree/master/pkg/cluster
 [build package]: https://github.com/kubernetes-sigs/kind/tree/master/pkg/build

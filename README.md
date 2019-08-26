@@ -4,12 +4,12 @@
 <img alt="Build Status" src="https://prow.k8s.io/badge.svg?jobs=ci-kind-build">
 </a> <a href="https://godoc.org/sigs.k8s.io/kind"><img src="https://godoc.org/sigs.k8s.io/kind?status.svg"></a> <a href="https://goreportcard.com/report/sigs.k8s.io/kind"><img alt="Go Report Card" src="https://goreportcard.com/badge/sigs.k8s.io/kind" /></a></p>
 
-### [View The Documentation](https://kind.sigs.k8s.io)
+# Please see [Our Documentation](https://kind.sigs.k8s.io/docs/user/quick-start/) for more in-depth installation etc.
 
 kind is a tool for running local Kubernetes clusters using Docker container "nodes".  
 kind is primarily designed for testing Kubernetes 1.11+, initially targeting the [conformance tests].
 
-If you have [go] and [docker] installed `GO111MODULE="on" go get sigs.k8s.io/kind@v0.4.0 && kind create cluster` is all you need!
+If you have [go] ([1.11+][go-supported]) and [docker] installed `GO111MODULE="on" go get sigs.k8s.io/kind@v0.5.1 && kind create cluster` is all you need!
 
 <img src="https://gist.githubusercontent.com/BenTheElder/621bc321fc6d9506fd936feb36d32dd0/raw/13fe81c219e64b4917575c8988e06719c072c7f1/kind-demo.gif" alt="2x speed `kind create cluster` demo" />
 
@@ -25,9 +25,9 @@ kind bootstraps each "node" with [kubeadm][kubeadm]. For more details see [the d
 
 ## Installation and usage
 
-You can install kind with `GO111MODULE="on" go get sigs.k8s.io/kind@v0.4.0`.
+You can install kind with `GO111MODULE="on" go get sigs.k8s.io/kind@v0.5.1`.
 
-**NOTE**: please use the latest go to do this, ideally go 1.12.6 or greater.
+**NOTE**: please use the latest go to do this, ideally go 1.12.9 or greater.
 
 This will put `kind` in `$(go env GOPATH)/bin`. If you encounter the error
 `kind: command not found` after installation then you may need to either add that directory to your `$PATH` as
@@ -39,12 +39,12 @@ Without installing go, kind can be built reproducibly with docker using `make bu
 Stable binaries are also available on the [releases] page. Stable releases are
 generally recommended for CI usage in particular.
 To install, download the binary for your platform from "Assets" and place this
-into your `$PATH`. E.G. for macOS:
+into your `$PATH`:
 
 ```console
-curl -Lo ./kind-darwin-amd64 https://github.com/kubernetes-sigs/kind/releases/download/v0.4.0/kind-darwin-amd64
-chmod +x ./kind-darwin-amd64
-mv ./kind-darwin-amd64 /some-dir-in-your-PATH/kind
+curl -Lo ./kind https://github.com/kubernetes-sigs/kind/releases/download/v0.5.1/kind-$(uname)-amd64
+chmod +x ./kind
+mv ./kind /some-dir-in-your-PATH/kind
 ```
 
 To use kind, you will need to [install docker].  
@@ -80,7 +80,7 @@ See also: our own [contributor guide] and the Kubernetes [community page].
 
 - kind supports multi-node (including HA) clusters
 - kind supports building Kubernetes release builds from source
-  - support for make / bash / docker, bazel, or installing from apt, in addition to pre-published builds.
+  - support for make / bash / docker or bazel, in addition to pre-published builds.
 - kind is written in go, can be used as a library, has stable releases
 - kind supports Windows in addition to MacOS and Linux
 - kind is a [CNCF certified conformant Kubernetes installer](https://landscape.cncf.io/selected=kind)
@@ -102,12 +102,13 @@ Participation in the Kubernetes community is governed by the [Kubernetes Code of
 
 <!--links-->
 [go]: https://golang.org/
+[go-supported]: https://golang.org/doc/devel/release.html#policy
 [docker]: https://www.docker.com/
 [community page]: http://kubernetes.io/community/
 [Kubernetes Code of Conduct]: code-of-conduct.md
 [Go Report Card Badge]: https://goreportcard.com/badge/sigs.k8s.io/kind
 [Go Report Card]: https://goreportcard.com/report/sigs.k8s.io/kind
-[conformance tests]: https://github.com/kubernetes/community/blob/master/contributors/devel/conformance-tests.md
+[conformance tests]: https://github.com/kubernetes/community/blob/master/contributors/devel/sig-architecture/conformance-tests.md
 [packages]: ./pkg
 [cluster package]: ./pkg/cluster
 [build package]: ./pkg/build

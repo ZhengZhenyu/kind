@@ -27,9 +27,9 @@ import (
 
 	"sigs.k8s.io/kind/pkg/cluster"
 	clusternodes "sigs.k8s.io/kind/pkg/cluster/nodes"
-	"sigs.k8s.io/kind/pkg/concurrent"
 	"sigs.k8s.io/kind/pkg/container/docker"
 	"sigs.k8s.io/kind/pkg/fs"
+	"sigs.k8s.io/kind/pkg/util/concurrent"
 )
 
 type flagpole struct {
@@ -51,7 +51,7 @@ func NewCommand() *cobra.Command {
 		Short: "loads docker image from host into nodes",
 		Long:  "loads docker image from host into all or specified nodes by name",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return runE(flags, cmd, args)
+			return runE(flags, args)
 		},
 	}
 	cmd.Flags().StringVar(
@@ -69,10 +69,10 @@ func NewCommand() *cobra.Command {
 	return cmd
 }
 
-func runE(flags *flagpole, cmd *cobra.Command, args []string) error {
+func runE(flags *flagpole, args []string) error {
 	imageName := args[0]
-	// Check that the image exists locally, if not return error
-	_, err := docker.ImageInspect(imageName)
+	// Check that the image exists locally and gets its ID, if not return error
+	imageID, err := docker.ImageID(imageName)
 	if err != nil {
 		return errors.Errorf("Image: %q not present locally", imageName)
 	}
@@ -116,10 +116,10 @@ func runE(flags *flagpole, cmd *cobra.Command, args []string) error {
 	// pick only the nodes that don't have the image
 	selectedNodes := []clusternodes.Node{}
 	for _, node := range candidateNodes {
-		_, err := node.ImageInspect(imageName)
-		if err != nil {
+		id, err := node.ImageID(imageName)
+		if err != nil || id != imageID {
 			selectedNodes = append(selectedNodes, node)
-			log.Debugf("Image: %q not present on node %q", imageName, node.String())
+			log.Debugf("Image: %q with ID %q not present on node %q", imageName, imageID, node.String())
 		}
 	}
 

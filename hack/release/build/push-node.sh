@@ -13,17 +13,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set -o errexit
-set -o nounset
-set -o pipefail
+set -o errexit -o nounset -o pipefail
 
 # cd to the repo root
-REPO_ROOT=$(git rev-parse --show-toplevel)
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd -P)"
 cd "${REPO_ROOT}"
 
 # ensure we have up to date kind
 make build
-KIND="${REPO_ROOT}/bin/kind"
 
 # generate tag
 DATE="$(date +v%Y%m%d)"
@@ -32,7 +29,7 @@ TAG="${DATE}-$(git describe --always --dirty)"
 # build
 KUBEROOT="${KUBEROOT:-${GOPATH}/src/k8s.io/kubernetes}"
 set -x
-"${KIND}" build node-image --image="kindest/node:${TAG}" --kube-root="${KUBEROOT}"
+"${REPO_ROOT}/bin/kind" build node-image --image="kindest/node:${TAG}" --kube-root="${KUBEROOT}"
 
 # re-tag with kubernetes version
 IMG="kindest/node:${TAG}"

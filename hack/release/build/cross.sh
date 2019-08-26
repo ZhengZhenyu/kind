@@ -14,46 +14,36 @@
 # limitations under the License.
 
 # simple script to build binaries for release
-
-set -o errexit
-set -o nounset
-set -o pipefail
+set -o errexit -o nounset -o pipefail
 
 # cd to the repo root
-REPO_ROOT=$(git rev-parse --show-toplevel)
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd -P)"
 cd "${REPO_ROOT}"
 
-OUT="${REPO_ROOT}/bin"
-mkdir -p "${OUT}"
+# controls the number of concurrent builds
+PARALLELISM=${PARALLELISM:-6}
 
-CLEAN="false"
-for i in "$@" ; do
-    if [[ $i == "--clean" ]] ; then
-        CLEAN="true"
-        break
-    fi
-done
-
-if [[ "${CLEAN}" == "true" ]]; then
-    echo "Cleaning ${OUT}/kind-*"
-    rm -f "${OUT}/kind-*"
-fi
-
-build() {
-    GOOS="${1}"
-    GOARCH="${2}"
-    export GOOS
-    export GOARCH
-    KIND_BINARY_NAME="kind-${GOOS}-${GOARCH}"
-    export KIND_BINARY_NAME
-    make build
-}
-
-# TODO(bentheelder): support more platforms
 echo "Building in parallel for:"
-build "linux" "amd64" & \
-build "linux" "arm64" & \
-build "linux" "ppc64le" & \
-build "darwin" "amd64" & \
-build "windows" "amd64" & \
-wait
+# What we do here:
+# - use xargs to build in parallel (-P) while collecting a combined exit code
+# - use cat to supply the individual args to xargs (one line each)
+# - use env -S to split the line into environment variables and execute
+# - ... the build
+# NOTE: the binary name needs to be in single quotes so we delay evaluating
+# GOOS / GOARCH
+# NOTE: disable SC2016 because we _intend_ for these to evaluate later
+# shellcheck disable=SC2016
+if xargs -0 -n1 -P "${PARALLELISM}" bash -c 'eval $0; make build KIND_BINARY_NAME=kind-${GOOS}-${GOARCH}'; then
+    echo "Cross build passed!" 1>&2
+else
+    echo "Cross build failed!" 1>&2
+    exit 1
+fi < <(cat <<EOF | tr '\n' '\0'
+GOOS=windows GOARCH=amd64
+GOOS=darwin GOARCH=amd64
+GOOS=linux GOARCH=amd64
+GOOS=linux GOARCH=arm
+GOOS=linux GOARCH=arm64
+GOOS=linux GOARCH=ppc64le
+EOF
+)

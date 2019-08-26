@@ -13,25 +13,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set -o errexit
-set -o nounset
-set -o pipefail
+set -o errexit -o nounset -o pipefail
 
 # cd to the repo root
-REPO_ROOT=$(git rev-parse --show-toplevel)
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd -P)"
 cd "${REPO_ROOT}"
 
 # ensure we have up to date kind
 make build
-KIND="${REPO_ROOT}/bin/kind"
 
 # generate tag
-DATE="$(date +v%Y%m%d)"
-TAG="${DATE}-$(git describe --always --dirty)"
+TAG="$(date +v%Y%m%d)-$(git describe --always --dirty)"
 IMAGE="kindest/base:${TAG}"
 
 # build
-(set -x; "${KIND}" build base-image --image="${IMAGE}" --source="${REPO_ROOT}/images/base/")
+(set -x; "${REPO_ROOT}/bin/kind" build base-image --image="${IMAGE}" --source="${REPO_ROOT}/images/base/")
 
 # push
 docker push "${IMAGE}"

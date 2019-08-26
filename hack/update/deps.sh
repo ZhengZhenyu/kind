@@ -13,26 +13,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
-# Runs go mod tidy, go mod vendor, and then prun vendor
+# Runs go mod tidy, go mod vendor, and then prunes vendor
 #
 # Usage:
 #   deps.sh
-
-set -o nounset
-set -o errexit
-set -o pipefail
+set -o errexit -o nounset -o pipefail
 
 # cd to the repo root
-REPO_ROOT=$(git rev-parse --show-toplevel)
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd -P)"
 cd "${REPO_ROOT}"
 
-# enable modules and the proxy cache
-export GO111MODULE="on"
-GOPROXY="${GOPROXY:-https://proxy.golang.org}"
-export GOPROXY
-
-go mod tidy
-
-cd "hack/tools"
-go mod tidy
+# tidy all modules
+hack/go_container.sh go mod tidy
+SOURCE_DIR="${REPO_ROOT}/hack/tools" hack/go_container.sh go mod tidy
+SOURCE_DIR="${REPO_ROOT}/cmd/kindnetd" hack/go_container.sh go mod tidy

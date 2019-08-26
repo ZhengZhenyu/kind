@@ -23,6 +23,7 @@ It may additionally be helpful to:
 * [Failing to apply overlay network](#failing-to-apply-overlay-network)
 * [Failure to build node image](#failure-to-build-node-image)
 * [Failure for cluster to properly start](#failure-for-cluster-to-properly-start)
+* [Docker permission denied](#docker-permission-denied)
 
 ## Failures involving mistmatched kubectl versions
 
@@ -126,9 +127,11 @@ equal to Docker 18.09.1.
 
 
 ## Failure to build node image
-The know case in which building kind's node image may fail is due to 
-Docker on Mac running out of memory, see [kind#229][kind#229].
+Building kind's node image may fail due to running out of memory on Docker for Mac or Docker for Windows.
+See [kind#229][kind#229].
+
 If you see something like this:
+
 ```
     cmd/kube-scheduler
     cmd/kube-proxy
@@ -157,7 +160,7 @@ Flags:
   -h, --help                help for node-image
       --image string        name:tag of the resulting image to be built (default "kindest/node:latest")
       --kube-root string    Path to the Kubernetes source directory (if empty, the path is autodetected)
-      --type string         build type, one of [bazel, docker, apt] (default "docker")
+      --type string         build type, one of [bazel, docker] (default "docker")
 
 Global Flags:
       --loglevel string   logrus log level [panic, fatal, error, warning, info, debug] (default "warning")
@@ -165,7 +168,7 @@ Global Flags:
 error building node image: failed to build kubernetes: failed to build images: exit status 2
 ```
 
-Then you may try increasing the resource limits for the Docker engine on Mac.
+Then you may try increasing the resource limits for the Docker engine on Mac or Windows.
 
 It is recommended that you allocate at least 8GB of RAM to build Kubernetes.
 
@@ -176,8 +179,9 @@ Open the **Preferences** menu.
 Go to the **Advanced** settings page, and change the settings there, see 
 [changing Docker's resource limits][Docker resource lims].
 
-<img width="400px" src="/docs/user/images/docker-pref-build.png"/>
+<img width="400px" src="/docs/user/images/docker-pref-build.png" alt="Setting 8Gb of memory in Docker for Mac" />
 
+<img width="400px" src="/docs/user/images/docker-pref-build-win.png" alt="Setting 8Gb of memory in Docker for Windows" />
 
 ## Failing to properly start cluster
 This issue is similar to a 
@@ -231,6 +235,19 @@ an 03 17:42:41 kind-1-control-plane kubelet[3804]: F0103 17:42:41.470269 3804 ku
 
 This problem seems to be related to a [bug in Docker][moby#9939].
 
+## Docker permission denied
+
+When using `kind`, we assume that the user you are executing kind as has permission to use docker.
+If you initially ran Docker CLI commands using `sudo`, you may see the following error, which indicates that your `~/.docker/` directory was created with incorrect permissions due to the `sudo` commands.
+
+```
+WARNING: Error loading config file: /home/user/.docker/config.json
+open /home/user/.docker/config.json: permission denied
+```
+
+To fix this problem, either follow the docker's docs [manage docker as a non root user][manage docker as a non root user],
+or try to use `sudo` before your commands (if you get `command not found` please check [this comment about sudo with kind][sudo with kind]).
+
 [issue tracker]: https://github.com/kubernetes-sigs/kind/issues
 [file an issue]: https://github.com/kubernetes-sigs/kind/issues/new
 [#kind]: https://kubernetes.slack.com/messages/CEKK1KTN2/
@@ -245,3 +262,5 @@ This problem seems to be related to a [bug in Docker][moby#9939].
 [moby#9939]: https://github.com/moby/moby/issues/9939
 [Docker resource lims]: https://docs.docker.com/docker-for-mac/#advanced
 [snap]: https://snapcraft.io/
+[manage docker as a non root user]: https://docs.docker.com/install/linux/linux-postinstall/#manage-docker-as-a-non-root-user
+[sudo with kind]: https://github.com/kubernetes-sigs/kind/issues/713#issuecomment-512665315
